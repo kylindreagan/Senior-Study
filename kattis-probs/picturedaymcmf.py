@@ -1,23 +1,28 @@
 import heapq
-"""
-Note:
-Will not work for large overlapping sets. (Perhaps other cases).
-May need different algorithm.
-"""
 groups = {}
 size_dict = {}
 
 #MINIMUM COST MAXIMUM FLOW
 class MCMF: 
-    def __init__(self,N): 
+    def __init__(self,N,a_cost, b_cost): 
         self.graph = [[] for _ in range(N)]
         self.N = N
+        self.a = a_cost
+        self.b = b_cost
 
     def add_edge(self, u, v, capacity, cost):
         #edge, capacity, cost, index of the reverse edge in the opposite node’s adjacency list.
         self.graph[u].append([v, capacity, cost, len(self.graph[v])])
         self.graph[v].append([u, 0, -cost, len(self.graph[u])-1])
     
+    def _update_cost(self, group_end, n, group_begin=1):
+        for i in range(group_begin, group_end-gb):
+            if size_dict[i] != 0:
+                self.graph[0][(n-1)+i][2] = self.a / size_dict[i]
+        for j in range(group_begin+ga, group_end):
+            if size_dict[j] != 0:
+                self.graph[0][(n-1)+j][2] = self.b / size_dict[j]
+
     def successiveShortestPaths(self, source, sink, group_end, max_flow=float('inf')):
         N = self.N
         prevv = [0] * N
@@ -75,6 +80,12 @@ class MCMF:
                         edge = self.graph[g][1]
                         edge[1] = 0
                         self.graph[0][edge[3]][1] = 0
+                        for t in groups:
+                            if g in groups[t] and t != u:
+                                groups[t].remove(g)
+                                size_dict[t] -= 1
+                    self._update_cost(group_end,n)
+
                 edge = self.graph[u][preve[v]]
                 edge[1] -= d
                 self.graph[v][edge[3]][1] += d
@@ -96,7 +107,7 @@ b_start = a_start + ga
 s_in_start = b_start + gb
 s_out_start = s_in_start + n
 sink = s_out_start + n
-mcmf = MCMF(sink+1)
+mcmf = MCMF(sink+1,a,b)
 
 for s in range(n):
     s_in = s_in_start + s
