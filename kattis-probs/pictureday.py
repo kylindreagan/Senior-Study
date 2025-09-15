@@ -1,5 +1,9 @@
 import heapq
-
+"""
+Note:
+Will not work for large overlapping sets. (Perhaps other cases).
+May need different algorithm.
+"""
 groups = {}
 size_dict = {}
 
