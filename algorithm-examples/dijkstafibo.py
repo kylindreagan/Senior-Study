@@ -6,12 +6,10 @@ def dijkstra(graph, source):
     prev = {v: None for v in graph}
     dist[source] = 0
 
-
     fib = FibHeap()
     node_map = {}
     for v in graph:
         node_map[v] = fib.insert(dist[v], v)
-
 
     while fib.n > 0:
         u_node = fib.extract_min()
