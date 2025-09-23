@@ -33,7 +33,7 @@ This repository reflects my effort to:
 
 ## Planned Topics & Structure
 
-| Week  | Topic |
+| Order  | Topic |
 |-------|-------|
 | **1** | Advanced Trees and Heaps |
 | **2** | Flow Networks <br/> _Including potential near-linear solutions with Laplacian solvers_ |
@@ -48,8 +48,6 @@ This repository reflects my effort to:
 | **11** | Semidefinite Programming <br/> _Applications to Max-Cut, Grothendieck inequality_ |
 | **12** | Convex and Submodular Optimization <br/> _Gradient methods, Lovász extensions, ML applications_ |
 | **13** | Miscellaneous & Emerging Topics <br/> _Online algorithms, fine-grained complexity, sublinear time_ |
-| **14** | Quantum Algorithms (Exploratory) |
-| **15** | Future Directions & Open Questions |
 
 ---
 
