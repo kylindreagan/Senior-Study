@@ -50,3 +50,8 @@ This repository reflects my effort to:
 | **13** | Miscellaneous & Emerging Topics <br/> _Online algorithms, fine-grained complexity, sublinear time_ |
 
 ---
+
+## How to Use
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/kylindreagan/Senior-Study
