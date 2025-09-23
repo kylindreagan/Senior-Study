@@ -1,7 +1,6 @@
 # Algorithm Design and Implementation Repository
 
-**Author:** Kylind Reagan  
-**Date:** September 2025  
+**Author:** Kylind Reagan
 
 ---
 
