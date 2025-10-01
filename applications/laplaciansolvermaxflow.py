@@ -1,8 +1,11 @@
 # ---------- illustrative electrical flow ----------
+# Uses Laplacian matrices and linear algebra to approximate maximum s-t flow.
+
 import numpy as np
 import networkx as nx
+from typing import List, Tuple
 
-def build_incidence_matrix(n, edges):
+def build_incidence_matrix(n: int, edges: List[Tuple[int, int]]) -> np.ndarray:
     """Return oriented incidence matrix B (m x n) for edges list (u,v)."""
     m = len(edges)
     B = np.zeros((m, n))
@@ -11,12 +14,12 @@ def build_incidence_matrix(n, edges):
         B[i, v] = -1
     return B
 
-def laplacian_from_B_and_weights(B, w):
+def laplacian_from_B_and_weights(B: np.ndarray, w: np.ndarray) -> np.ndarray:
     """Return Laplacian L = B^T * W * B where W = diag(w)."""
     W = np.diag(w)
     return B.T @ W @ B
 
-def electrical_flow(B, w, s, t, F=1.0):
+def electrical_flow(B: np.ndarray, w: np.ndarray, s: int, t: int, F: float = 1.0) -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute electrical flow for demand F from s to t.
     Returns (f, x) where f is signed flow on each oriented edge.
@@ -33,7 +36,14 @@ def electrical_flow(B, w, s, t, F=1.0):
     f = w * (B @ x)    # f_e = w_e * (x_u - x_v)
     return f, x
 
-def greedy_electrical_augment(n, edges, capacities, s, t, max_iters=1000):
+def greedy_electrical_augment(
+    n: int,
+    edges: List[Tuple[int, int]],
+    capacities: List[float],
+    s: int,
+    t: int,
+    max_iters: int = 1000
+) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     """
     Greedy augmentation using electrical flow directions.
     Returns (total_flow, flow_on_edges, remaining_cap, potentials).
