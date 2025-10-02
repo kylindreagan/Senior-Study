@@ -1,4 +1,4 @@
-#https://www.geeksforgeeks.org/dsa/binomial-heap-2/#
+#assistance from https://www.geeksforgeeks.org/dsa/binomial-heap-2/#
 class Node:
     def __init__(self, value):
         self.v = value

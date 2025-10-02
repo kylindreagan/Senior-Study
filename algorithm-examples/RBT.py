@@ -6,7 +6,7 @@
 5. For each node, all paths from the node to descendant leaves contain the same number of black nodes"""
 
 #Max height 2log(n+1)
-# class to implement node of RB Tree (https://www.geeksforgeeks.org/python/red-black-tree-in-python/)
+# class to implement node of RB Tree (assistance from https://www.geeksforgeeks.org/python/red-black-tree-in-python/)
 class RBNode:
         # cnostructor
     def __init__(self, value, color='red'):
