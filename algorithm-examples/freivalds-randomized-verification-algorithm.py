@@ -11,6 +11,10 @@ import random
 6. If it is zero or false, then matrix multiplication is correct otherwise not.
 7. End"""
 
+"""One-Sided Error: 
+If the equation \(AB=C\) is true, the algorithm will always correctly return "Yes".
+If the equation \(AB=C\) is false (\(AB\ne C\)), the algorithm will return "Yes" with a probability of at most .5"""
+
 def Freivaldsrandverify(A, B, C, n):
     v = [random.randint(0,1) for _ in range(n)]
     Bv = [sum(B[i][k] * v[k] for k in range(n)) for i in range(n)]
