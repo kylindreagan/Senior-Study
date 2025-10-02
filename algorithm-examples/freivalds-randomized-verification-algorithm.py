@@ -1,4 +1,4 @@
-#Assistance from https://www.geeksforgeeks.org/java/implementing-coppersmith-winograd-algorithm-in-java/# & https://www-auth.cs.wisc.edu/lists/theory-reading/2009-December/pdfmN6UVeUiJ3.pdf
+#Assistance from https://www.geeksforgeeks.org/java/implementing-coppersmith-winograd-algorithm-in-java/#
 import random
 
 """Task is to verify matrix multiplication as M1*M2=M3 or not.
