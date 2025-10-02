@@ -11,32 +11,9 @@ import random
 6. If it is zero or false, then matrix multiplication is correct otherwise not.
 7. End"""
 
-def coppersmithWinnograd(A, B, C, n):
-    v = [random.randint() % 2 for _ in range(n)]
-    
-    Bv = [0 for _ in range(n)]
-    for i in range(n):
-        for k in range(n):
-            Bv[i] += B[i][k] * v[k]
-
-    Cv = [0 for _ in range(n)]
-    for j in range(n):
-        for k in range(n):
-            Cv[j] += C[j][k] * v[k]
-    
-    ABv = [0 for _ in range(n)]
-    
-    for h in range(n):
-        for k in range(n):
-            ABv[h] += A[h][k] * Bv[k]
-
-    for x in range(n):
-        ABv[x] -= C[x]
-
-    for i in range(n):
-        if ABv[i] == 0:
-            continue
-        else:
-            return False
-    
-    return True
+def coppersmithWinogradVerify(A, B, C, n):
+    v = [random.randint(0,1) for _ in range(n)]
+    Bv = [sum(B[i][k] * v[k] for k in range(n)) for i in range(n)]
+    Cv = [sum(C[j][k] * v[k] for k in range(n)) for j in range(n)]
+    ABv = [sum(A[h][k] * Bv[k] for k in range(n)) for h in range(n)]
+    return all(ABv[i] == Cv[i] for i in range(n))
