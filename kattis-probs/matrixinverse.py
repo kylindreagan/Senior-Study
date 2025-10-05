@@ -26,6 +26,11 @@ def matvec(A, x):
         b[i] = sum(A[i][j] * x[j] for j in range(m))
     return b
 
+def clean(x):
+    if abs(x - round(x)) < 1e-10:
+        return int(round(x))
+    return x
+
 def lup_decomposition(A):
     n = len(A)
     M = [row[:] for row in A]
@@ -94,19 +99,18 @@ def lup_inverse(L, U, P):
             invA[j][i] = col[j]
     return invA
 
-def test():
-    A = [
-        [0, 2, 1],
-        [1, 1, 0],
-        [2, 3, 4]
-    ]
-    b = [1, 2, 3]
-
-    P, L, U = lup_decomposition(A)
-    x = lup_solve(P, L, U, b)
-    invA = lup_inverse(P, L, U)
-
-    print("Solution x =", x)
-    print("Inverse A^-1 =")
-    for row in invA:
-        print(row)
+case = 1
+while True:
+    try:
+        a,b = map(int, input().split())
+        c,d = map(int, input().split())
+        input()
+        A = [[a,b],[c,d]]
+        L, U, P = lup_decomposition(A)
+        inv = lup_inverse(L, U, P)
+        print(f"Case {case}:")
+        print(clean(inv[0][0]), clean(inv[0][1]))
+        print(clean(inv[1][0]), clean(inv[1][1]))
+        case += 1
+    except EOFError:
+        break
