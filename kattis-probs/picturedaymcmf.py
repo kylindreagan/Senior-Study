@@ -1,3 +1,4 @@
+#https://open.kattis.com/problems/pictureday 6.8 Difficulty
 import heapq
 groups = {}
 size_dict = {}

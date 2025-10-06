@@ -1,3 +1,4 @@
+#https://open.kattis.com/problems/matrix 2.9 Difficulty
 #Matrix helpers
 def zeros(n, m):
     return [[0.0 for _ in range(m)] for _ in range(n)]

@@ -1,4 +1,4 @@
-#https://open.kattis.com/problems/elementarymath
+#https://open.kattis.com/problems/elementarymath 4.2 Difficulty
 from collections import deque
 
 INF = 10**9
