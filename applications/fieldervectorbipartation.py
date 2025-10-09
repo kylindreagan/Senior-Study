@@ -23,31 +23,69 @@ def bipartite(fiedler_vector):
 
     return group1, group2
 
-def visualize(n, A, group1, group2):
-    # Simple layout: first cluster on left, second on right
-    positions = np.array([
-        [0, 0], [1, 0.3], [1, -0.3], [2, 0],
-        [3, 0.3], [4, 0]
-    ])
+def visualize(n, A, group1, group2, steps=500, k=0.6, repulsion=0.05, lr=0.01):
+    """
+    n          : number of vertices
+    A          : adjacency matrix
+    group1/2   : node indices for bipartitioning
+    steps      : number of layout iterations
+    k          : spring constant (edge attraction)
+    repulsion  : repulsion factor between all nodes
+    lr         : learning rate (step size for updates)
+    """
+    np.random.seed(0)
+    pos = np.random.randn(n, 2)  # random initial positions
+
+    # normalize adjacency
+    A = (A > 0).astype(float)
+
+    for _ in range(steps):
+        forces = np.zeros_like(pos)
+
+        # Repulsion between all pairs
+        for i in range(n):
+            diff = pos[i] - pos
+            dist2 = np.sum(diff**2, axis=1) + 1e-4
+            repulse = repulsion * diff / dist2[:, None]
+            forces[i] += np.sum(repulse, axis=0)
+
+        # Attraction along edges
+        for i in range(n):
+            neighbors = np.where(A[i] > 0)[0]
+            for j in neighbors:
+                diff = pos[i] - pos[j]
+                forces[i] -= k * diff  # pull together
+
+        # Update positions
+        pos += lr * forces
+
+        # Optional: center graph
+        pos -= np.mean(pos, axis=0)
+
+    # --- Plot ---
+    plt.figure(figsize=(9, 6))
 
     # Draw edges
     for i in range(n):
         for j in range(i + 1, n):
             if A[i, j] > 0:
-                plt.plot([positions[i, 0], positions[j, 0]],
-                        [positions[i, 1], positions[j, 1]], 'gray', alpha=0.5)
+                plt.plot([pos[i, 0], pos[j, 0]],
+                         [pos[i, 1], pos[j, 1]],
+                         color='gray', alpha=0.4, linewidth=0.8)
 
     # Draw nodes
-    plt.scatter(positions[group1, 0], positions[group1, 1],
-                c='lightblue', s=400, label='Group 1')
-    plt.scatter(positions[group2, 0], positions[group2, 1],
-                c='orange', s=400, label='Group 2')
+    plt.scatter(pos[group1, 0], pos[group1, 1],
+                c='lightblue', s=150, edgecolors='k', label='Group 1')
+    plt.scatter(pos[group2, 0], pos[group2, 1],
+                c='orange', s=150, edgecolors='k', label='Group 2')
 
-    # Label nodes
+    # Label each vertex
     for i in range(n):
-        plt.text(positions[i, 0], positions[i, 1] + 0.1, str(i), ha='center')
+        plt.text(pos[i, 0], pos[i, 1] + 0.15, str(i),
+                 ha='center', va='center', fontsize=7)
 
     plt.axis('off')
+    plt.gca().set_aspect('equal')
     plt.title("Spectral Bipartitioning via Fiedler Vector")
     plt.legend()
     plt.show()
@@ -63,16 +101,52 @@ def main():
     [0, 0, 0, 0, 1, 0]
     ], dtype=float)
 
-    n = A.shape[0]
+    B = np.array([
+    # Cluster 1 (0–8)
+    [0,1,1,1,0,0,1,0,0,  1,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0],
+    [1,0,1,0,1,0,1,0,0,  1,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0],
+    [1,1,0,1,0,1,1,0,0,  0,1,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0],
+    [1,0,1,0,1,0,1,0,0,  0,0,1,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0],
+    [0,1,0,1,0,1,1,1,0,  0,0,0,1,0,0,0,0,0,  0,0,0,0,0,0,0,0,0],
+    [0,0,1,0,1,0,1,1,0,  0,0,0,0,1,0,0,0,0,  0,0,0,0,0,0,0,0,0],
+    [1,1,1,1,1,1,0,1,0,  0,0,0,0,0,1,0,0,0,  0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,1,1,1,0,1,  0,0,0,0,0,0,1,0,0,  0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,0,  0,0,0,0,0,0,0,1,0,  0,0,0,0,0,0,0,0,0],
 
-    L = calculate_laplacian(A)
+    # Cluster 2 (9–17)
+    [1,1,0,0,0,0,0,0,0,  0,1,1,1,0,0,1,0,0,  1,0,0,0,0,0,0,0,0],
+    [0,0,1,0,0,0,0,0,0,  1,0,1,0,1,0,1,0,0,  0,1,0,0,0,0,0,0,0],
+    [0,0,0,1,0,0,0,0,0,  1,1,0,1,0,1,1,0,0,  0,0,1,0,0,0,0,0,0],
+    [0,0,0,0,1,0,0,0,0,  1,0,1,0,1,0,1,1,0,  0,0,0,1,0,0,0,0,0],
+    [0,0,0,0,0,1,0,0,0,  0,1,0,1,0,1,1,0,1,  0,0,0,0,1,0,0,0,0],
+    [0,0,0,0,0,0,1,0,0,  0,0,1,0,1,0,1,0,1,  0,0,0,0,0,1,0,0,0],
+    [0,0,0,0,0,0,0,1,0,  1,1,1,1,1,1,0,1,0,  0,0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,0,0,0,1,  0,0,0,1,0,0,1,0,1,  0,0,0,0,0,0,0,1,0],
+    [0,0,0,0,0,0,0,0,0,  0,0,0,0,1,0,0,1,0,  0,0,0,0,0,0,0,0,1],
+
+    # Cluster 3 (18–26)
+    [0,0,0,0,0,0,0,0,0,  1,0,0,0,0,0,0,0,0,  0,1,1,1,0,0,0,1,0],
+    [0,0,0,0,0,0,0,0,0,  0,1,0,0,0,0,0,0,0,  1,0,1,0,1,0,0,1,0],
+    [0,0,0,0,0,0,0,0,0,  0,0,1,0,0,0,0,0,0,  1,1,0,1,0,1,0,1,0],
+    [0,0,0,0,0,0,0,0,0,  0,0,0,1,0,0,0,0,0,  1,0,1,0,1,0,1,0,0],
+    [0,0,0,0,0,0,0,0,0,  0,0,0,0,1,0,0,0,0,  0,1,0,1,0,1,0,0,1],
+    [0,0,0,0,0,0,0,0,0,  0,0,0,0,0,1,0,0,0,  0,0,1,0,1,0,1,0,1],
+    [0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,1,0,0,  0,0,0,1,0,1,0,1,1],
+    [0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,1,0,  1,1,0,0,1,0,1,0,0],
+    [0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,1,  0,0,0,1,0,1,1,0,0]
+    ], dtype=float)
+
+
+    n = B.shape[0]
+
+    L = calculate_laplacian(B)
     lambda2, fiedler_vector = computefiedler(L)
     print("Algebraic connectivity (λ2):", round(lambda2, 4))
     print("Fiedler vector:", np.round(fiedler_vector, 4))
 
     group1, group2 = bipartite(fiedler_vector)
 
-    visualize(n, A, group1, group2)
+    visualize(n, B, group1, group2)
 
 if __name__ == "__main__":
     main()
