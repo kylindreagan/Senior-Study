@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+import matplotlib.animation as animation
 
 def calculate_laplacian(A):
     degree_matrix = np.diag(A.sum(axis=1))
@@ -34,38 +34,37 @@ def visualize(n, A, group1, group2, steps=500, k=0.6, repulsion=0.05, lr=0.01):
     lr         : learning rate (step size for updates)
     """
     np.random.seed(0)
-    pos = np.random.randn(n, 2)  # random initial positions
+    pos = np.random.randn(n, 2)  # random starting positions in 2D space
 
-    # normalize adjacency
+    # Ensure binary adjacency matrix
     A = (A > 0).astype(float)
 
     for _ in range(steps):
         forces = np.zeros_like(pos)
 
-        # Repulsion between all pairs
+        # --- Repulsion (Coulomb-like) ---
         for i in range(n):
-            diff = pos[i] - pos
-            dist2 = np.sum(diff**2, axis=1) + 1e-4
+            diff = pos[i] - pos              # vector from others to node i
+            dist2 = np.sum(diff**2, axis=1) + 1e-4  # squared distances
             repulse = repulsion * diff / dist2[:, None]
-            forces[i] += np.sum(repulse, axis=0)
+            forces[i] += np.sum(repulse, axis=0)    # sum of all repulsion forces
 
-        # Attraction along edges
+        # --- Attraction (Spring-like) ---
         for i in range(n):
             neighbors = np.where(A[i] > 0)[0]
             for j in neighbors:
                 diff = pos[i] - pos[j]
-                forces[i] -= k * diff  # pull together
+                forces[i] -= k * diff  # pull connected nodes closer
 
-        # Update positions
+        # --- Update positions ---
         pos += lr * forces
+        pos -= np.mean(pos, axis=0)  # center graph each step
 
-        # Optional: center graph
-        pos -= np.mean(pos, axis=0)
-
-    # --- Plot ---
+    # --- Plot graph ---
     plt.figure(figsize=(9, 6))
+    plt.title("Spectral Bipartitioning (Fiedler Vector-Based)", fontsize=13)
 
-    # Draw edges
+    # Draw edges (light gray lines)
     for i in range(n):
         for j in range(i + 1, n):
             if A[i, j] > 0:
@@ -73,21 +72,107 @@ def visualize(n, A, group1, group2, steps=500, k=0.6, repulsion=0.05, lr=0.01):
                          [pos[i, 1], pos[j, 1]],
                          color='gray', alpha=0.4, linewidth=0.8)
 
-    # Draw nodes
+    # Draw nodes by partition color
     plt.scatter(pos[group1, 0], pos[group1, 1],
-                c='lightblue', s=150, edgecolors='k', label='Group 1')
+                c='lightblue', s=150, edgecolors='k', label='Group 1 (low Fiedler values)')
     plt.scatter(pos[group2, 0], pos[group2, 1],
-                c='orange', s=150, edgecolors='k', label='Group 2')
+                c='orange', s=150, edgecolors='k', label='Group 2 (high Fiedler values)')
 
-    # Label each vertex
+    # Label each node by its index
     for i in range(n):
         plt.text(pos[i, 0], pos[i, 1] + 0.15, str(i),
                  ha='center', va='center', fontsize=7)
 
     plt.axis('off')
     plt.gca().set_aspect('equal')
-    plt.title("Spectral Bipartitioning via Fiedler Vector")
     plt.legend()
+    plt.show()
+
+def visualize_animated(n, A, group1, group2, steps=200, spring_strength=0.6, repulsion_strength=0.05, learning_rate=0.01):
+    """
+    Animate spectral bipartitioning using a force-directed layout.
+    Automatically rescales the axes so the whole graph remains visible.
+    """
+
+    np.random.seed(0)
+    pos = np.random.randn(n, 2)
+    A = (A > 0).astype(float)
+
+    fig, ax = plt.subplots(figsize=(9, 6))
+    ax.set_title("Spectral Bipartitioning (Animated Layout)", fontsize=14)
+    ax.axis('off')
+    ax.set_aspect('equal')
+
+    # --- Initialize edges ---
+    edges = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            if A[i, j] > 0:
+                line, = ax.plot([], [], color='gray', alpha=0.3, linewidth=0.8)
+                edges.append((i, j, line))
+
+    # --- Initialize nodes and labels ---
+    scat1 = ax.scatter([], [], c='lightblue', s=150, edgecolors='k', label='Group 1 (low Fiedler values)')
+    scat2 = ax.scatter([], [], c='orange', s=150, edgecolors='k', label='Group 2 (high Fiedler values)')
+    labels = [ax.text(0, 0, str(i), ha='center', va='center', fontsize=7) for i in range(n)]
+    ax.legend()
+
+    def update_positions():
+        """Apply one iteration of the force simulation."""
+        nonlocal pos
+        forces = np.zeros_like(pos)
+
+        # --- Repulsion (Coulomb-like) ---
+        for i in range(n):
+            diff = pos[i] - pos
+            dist2 = np.sum(diff**2, axis=1) + 1e-4
+            repulse = repulsion_strength * diff / dist2[:, None]
+            forces[i] += np.sum(repulse, axis=0)
+
+        # --- Attraction (Spring-like) ---
+        for i in range(n):
+            neighbors = np.where(A[i] > 0)[0]
+            for j in neighbors:
+                diff = pos[i] - pos[j]
+                forces[i] -= spring_strength * diff
+
+        # --- Update positions ---
+        pos += learning_rate * forces
+        pos -= np.mean(pos, axis=0)  # center the graph
+
+        # Normalize scale so layout stays visible
+        max_range = np.max(np.linalg.norm(pos, axis=1))
+        if max_range > 0:
+            pos /= max_range
+
+    def animate(frame):
+        update_positions()
+
+        # Update edges
+        for (i, j, line) in edges:
+            line.set_data([pos[i, 0], pos[j, 0]], [pos[i, 1], pos[j, 1]])
+
+        # Update nodes
+        scat1.set_offsets(pos[group1])
+        scat2.set_offsets(pos[group2])
+
+        # Update labels
+        for i in range(n):
+            labels[i].set_position((pos[i, 0], pos[i, 1] + 0.08))
+
+        # Dynamically scale view around current positions
+        margin = 0.3
+        x_min, x_max = pos[:, 0].min() - margin, pos[:, 0].max() + margin
+        y_min, y_max = pos[:, 1].min() - margin, pos[:, 1].max() + margin
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_min, y_max)
+
+        return [line for (_, _, line) in edges] + [scat1, scat2] + labels
+
+    ani = animation.FuncAnimation(
+        fig, animate, frames=steps, interval=50, blit=True, repeat=False
+    )
+
     plt.show()
 
 def main():
@@ -136,9 +221,15 @@ def main():
     [0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,1,  0,0,0,1,0,1,1,0,0]
     ], dtype=float)
 
+    n = A.shape[0]
+    L = calculate_laplacian(A)
+    lambda2, fiedler_vector = computefiedler(L)
+    print("Algebraic connectivity (λ2):", round(lambda2, 4))
+    print("Fiedler vector:", np.round(fiedler_vector, 4))
+    group1, group2 = bipartite(fiedler_vector)
+    visualize(n, A, group1, group2)
 
     n = B.shape[0]
-
     L = calculate_laplacian(B)
     lambda2, fiedler_vector = computefiedler(L)
     print("Algebraic connectivity (λ2):", round(lambda2, 4))
@@ -146,7 +237,7 @@ def main():
 
     group1, group2 = bipartite(fiedler_vector)
 
-    visualize(n, B, group1, group2)
+    visualize_animated(n, B, group1, group2)
 
 if __name__ == "__main__":
     main()
