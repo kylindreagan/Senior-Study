@@ -89,11 +89,6 @@ def visualize(n, A, group1, group2, steps=500, k=0.6, repulsion=0.05, lr=0.01):
     plt.show()
 
 def visualize_animated(n, A, group1, group2, steps=200, spring_strength=0.6, repulsion_strength=0.05, learning_rate=0.01):
-    """
-    Animate spectral bipartitioning using a force-directed layout.
-    Automatically rescales the axes so the whole graph remains visible.
-    """
-
     np.random.seed(0)
     pos = np.random.randn(n, 2)
     A = (A > 0).astype(float)
@@ -112,55 +107,54 @@ def visualize_animated(n, A, group1, group2, steps=200, spring_strength=0.6, rep
                 edges.append((i, j, line))
 
     # --- Initialize nodes and labels ---
-    scat1 = ax.scatter([], [], c='lightblue', s=150, edgecolors='k', label='Group 1 (low Fiedler values)')
-    scat2 = ax.scatter([], [], c='orange', s=150, edgecolors='k', label='Group 2 (high Fiedler values)')
+    scat1 = ax.scatter([], [], c='lightblue', s=150, edgecolors='k', label='Group 1')
+    scat2 = ax.scatter([], [], c='orange', s=150, edgecolors='k', label='Group 2')
     labels = [ax.text(0, 0, str(i), ha='center', va='center', fontsize=7) for i in range(n)]
     ax.legend()
 
+    # --- Pause control ---
+    paused = False
+    def on_click(event):
+        nonlocal paused
+        paused = not paused
+
+    fig.canvas.mpl_connect('key_press_event', lambda event: on_click(event) if event.key == ' ' else None)
+
     def update_positions():
-        """Apply one iteration of the force simulation."""
         nonlocal pos
         forces = np.zeros_like(pos)
 
-        # --- Repulsion (Coulomb-like) ---
         for i in range(n):
             diff = pos[i] - pos
             dist2 = np.sum(diff**2, axis=1) + 1e-4
             repulse = repulsion_strength * diff / dist2[:, None]
             forces[i] += np.sum(repulse, axis=0)
 
-        # --- Attraction (Spring-like) ---
         for i in range(n):
             neighbors = np.where(A[i] > 0)[0]
             for j in neighbors:
                 diff = pos[i] - pos[j]
                 forces[i] -= spring_strength * diff
 
-        # --- Update positions ---
         pos += learning_rate * forces
-        pos -= np.mean(pos, axis=0)  # center the graph
-
-        # Normalize scale so layout stays visible
+        pos -= np.mean(pos, axis=0)
         max_range = np.max(np.linalg.norm(pos, axis=1))
         if max_range > 0:
             pos /= max_range
 
     def animate(frame):
-        update_positions()
+        if not paused:
+            update_positions()
 
-        # Update edges
         for (i, j, line) in edges:
             line.set_data([pos[i, 0], pos[j, 0]], [pos[i, 1], pos[j, 1]])
 
-        # Update nodes
         scat1.set_offsets(pos[group1])
         scat2.set_offsets(pos[group2])
 
-        # Update labels
         for i in range(n):
             labels[i].set_position((pos[i, 0], pos[i, 1] + 0.08))
 
-        # Dynamically scale view around current positions
         margin = 0.3
         x_min, x_max = pos[:, 0].min() - margin, pos[:, 0].max() + margin
         y_min, y_max = pos[:, 1].min() - margin, pos[:, 1].max() + margin
@@ -169,11 +163,9 @@ def visualize_animated(n, A, group1, group2, steps=200, spring_strength=0.6, rep
 
         return [line for (_, _, line) in edges] + [scat1, scat2] + labels
 
-    ani = animation.FuncAnimation(
-        fig, animate, frames=steps, interval=50, blit=True, repeat=False
-    )
-
+    ani = animation.FuncAnimation(fig, animate, frames=steps, interval=50, blit=True, repeat=False)
     plt.show()
+
 
 def main():
     #Test
